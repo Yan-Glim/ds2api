@@ -14,11 +14,11 @@ func TestSharedConstantsLoaded(t *testing.T) {
 	if ClientVersion != client.Version {
 		t.Fatalf("unexpected client version=%q", ClientVersion)
 	}
-	wantUserAgent := client.Name + "/" + client.Version + " Android/" + client.AndroidAPILevel
+	wantUserAgent := client.Name + "/" + client.Version
 	if BaseHeaders["User-Agent"] != wantUserAgent {
 		t.Fatalf("unexpected user agent=%q", BaseHeaders["User-Agent"])
 	}
-	if BaseHeaders["x-client-platform"] != "android" {
+	if BaseHeaders["x-client-platform"] != "web" {
 		t.Fatalf("unexpected base header x-client-platform=%q", BaseHeaders["x-client-platform"])
 	}
 	if BaseHeaders["x-client-version"] != ClientVersion {

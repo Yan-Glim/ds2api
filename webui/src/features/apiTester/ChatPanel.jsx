@@ -38,15 +38,12 @@ export default function ChatPanel({
 
         setUploadingFiles(true)
         const initialSelectedAccount = String(selectedAccount || '').trim()
-        const selectedModel = String(model || '').trim()
         let boundAccount = initialSelectedAccount
         for (const file of files) {
             const formData = new FormData()
             formData.append('file', file)
             formData.append('purpose', 'assistants')
-            if (selectedModel) {
-                formData.append('model', selectedModel)
-            }
+            // Do not pass model to avoid pro-model upload rejection; backend defaults to 'default'
 
             const headers = {
                 'Authorization': `Bearer ${effectiveKey}`,

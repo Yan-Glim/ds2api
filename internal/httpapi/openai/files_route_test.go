@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -241,6 +242,23 @@ func TestFilesRouteRejectsNonMultipart(t *testing.T) {
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestFilesRouteUploadRejectsProModel(t *testing.T) {
+	h := &openAITestSurface{Store: mockOpenAIConfig{}, Auth: streamStatusAuthStub{}, DS: &filesRouteDSStub{}}
+	r := chi.NewRouter()
+	registerOpenAITestRoutes(r, h)
+
+	req := newMultipartUploadRequest(t, "assistants", "notes.txt", []byte("hello world"), "deepseek-v4-pro")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "not supported for pro models") {
+		t.Fatalf("expected pro model upload rejection message, got body=%s", rec.Body.String())
 	}
 }
 

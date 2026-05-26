@@ -290,6 +290,58 @@ func TestResponsesInlineUploadFailureReturnsInternalServerError(t *testing.T) {
 	}
 }
 
+func TestPreprocessInlineFileInputsRejectsProModelWithInlineFiles(t *testing.T) {
+	ds := &inlineUploadDSStub{}
+	h := &openAITestSurface{DS: ds}
+	req := map[string]any{
+		"model": "deepseek-v4-pro",
+		"messages": []any{
+			map[string]any{
+				"role": "user",
+				"content": []any{
+					map[string]any{
+						"type":      "image_url",
+						"image_url": map[string]any{"url": "data:image/png;base64,QUJDRA=="},
+					},
+				},
+			},
+		},
+	}
+
+	err := h.preprocessInlineFileInputs(context.Background(), &auth.RequestAuth{DeepSeekToken: "token"}, req)
+	if err == nil {
+		t.Fatal("expected error for pro model inline file upload, got nil")
+	}
+	if !strings.Contains(err.Error(), "not supported for pro models") {
+		t.Fatalf("expected pro model rejection message, got %v", err)
+	}
+	if len(ds.uploadCalls) != 0 {
+		t.Fatalf("expected no upload calls for pro model, got %d", len(ds.uploadCalls))
+	}
+}
+
+func TestPreprocessInlineFileInputsAllowsProModelWithoutFiles(t *testing.T) {
+	ds := &inlineUploadDSStub{}
+	h := &openAITestSurface{DS: ds}
+	req := map[string]any{
+		"model": "deepseek-v4-pro",
+		"messages": []any{
+			map[string]any{
+				"role":    "user",
+				"content": "hello",
+			},
+		},
+	}
+
+	err := h.preprocessInlineFileInputs(context.Background(), &auth.RequestAuth{DeepSeekToken: "token"}, req)
+	if err != nil {
+		t.Fatalf("expected no error for pro model without files, got %v", err)
+	}
+	if len(ds.uploadCalls) != 0 {
+		t.Fatalf("expected no upload calls, got %d", len(ds.uploadCalls))
+	}
+}
+
 func TestVercelPrepareUploadsInlineFilesBeforeLeasePayload(t *testing.T) {
 	t.Setenv("VERCEL", "1")
 	t.Setenv("DS2API_VERCEL_INTERNAL_SECRET", "stream-secret")

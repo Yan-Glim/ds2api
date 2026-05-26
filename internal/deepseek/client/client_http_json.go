@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 
 	"ds2api/internal/config"
 	trans "ds2api/internal/deepseek/transport"
@@ -22,12 +23,25 @@ func (c *Client) postJSON(ctx context.Context, doer trans.Doer, fallback trans.D
 	return body, nil
 }
 
+func redactedHeadersCopy(headers map[string]string) map[string]string {
+	logHeaders := make(map[string]string, len(headers))
+	for k, v := range headers {
+		if strings.EqualFold(k, "authorization") {
+			logHeaders[k] = "<redacted>"
+		} else {
+			logHeaders[k] = v
+		}
+	}
+	return logHeaders
+}
+
 func (c *Client) postJSONWithStatus(ctx context.Context, doer trans.Doer, fallback trans.Doer, url string, headers map[string]string, payload any) (map[string]any, int, error) {
 	b, err := json.Marshal(payload)
 	if err != nil {
 		return nil, 0, err
 	}
 	headers = c.jsonHeaders(headers)
+	config.Logger.Info("[deepseek] POST request", "url", url, "headers", redactedHeadersCopy(headers), "payload", string(b))
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(b))
 	if err != nil {
 		return nil, 0, err
@@ -66,6 +80,7 @@ func (c *Client) postJSONWithStatus(ctx context.Context, doer trans.Doer, fallba
 
 func (c *Client) getJSONWithStatus(ctx context.Context, doer trans.Doer, url string, headers map[string]string) (map[string]any, int, error) {
 	clients := c.requestClientsFromContext(ctx)
+	config.Logger.Info("[deepseek] GET request", "url", url, "headers", redactedHeadersCopy(headers))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, 0, err

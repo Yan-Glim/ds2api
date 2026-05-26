@@ -47,6 +47,9 @@ func (s Service) ApplyCurrentInputFile(ctx context.Context, a *auth.RequestAuth,
 	if len([]rune(text)) < threshold {
 		return stdReq, nil
 	}
+	if resolvedType, ok := config.GetModelType(stdReq.ResolvedModel); ok && resolvedType == "expert" {
+		return stdReq, nil
+	}
 	fileText := promptcompat.BuildOpenAICurrentInputContextTranscript(stdReq.Messages)
 	if strings.TrimSpace(fileText) == "" {
 		return stdReq, errors.New("current user input file produced empty transcript")
@@ -116,6 +119,9 @@ func (s Service) ApplyCurrentInputFile(ctx context.Context, a *auth.RequestAuth,
 
 func (s Service) ReuploadAppliedCurrentInputFile(ctx context.Context, a *auth.RequestAuth, stdReq promptcompat.StandardRequest) (promptcompat.StandardRequest, error) {
 	if !stdReq.CurrentInputFileApplied || s.DS == nil || a == nil {
+		return stdReq, nil
+	}
+	if resolvedType, ok := config.GetModelType(stdReq.ResolvedModel); ok && resolvedType == "expert" {
 		return stdReq, nil
 	}
 	fileText := strings.TrimSpace(stdReq.HistoryText)

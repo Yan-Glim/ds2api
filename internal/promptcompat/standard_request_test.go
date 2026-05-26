@@ -24,9 +24,6 @@ func TestStandardRequestCompletionPayloadSetsModelTypeFromResolvedModel(t *testi
 				Thinking:      tc.thinking,
 				Search:        tc.search,
 				RefFileIDs:    []string{"file-a", "file-b"},
-				PassThrough: map[string]any{
-					"temperature": 0.3,
-				},
 			}
 
 			payload := req.CompletionPayload("session-123")
@@ -43,8 +40,11 @@ func TestStandardRequestCompletionPayloadSetsModelTypeFromResolvedModel(t *testi
 			if got := payload["search_enabled"]; got != tc.search {
 				t.Fatalf("unexpected search_enabled: %#v", got)
 			}
-			if got := payload["temperature"]; got != 0.3 {
-				t.Fatalf("expected passthrough temperature, got %#v", got)
+			if got := payload["action"]; got != nil {
+				t.Fatalf("expected action nil, got %#v", got)
+			}
+			if got := payload["preempt"]; got != false {
+				t.Fatalf("expected preempt false, got %#v", got)
 			}
 			refFileIDs, ok := payload["ref_file_ids"].([]any)
 			if !ok {

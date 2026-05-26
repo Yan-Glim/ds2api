@@ -149,6 +149,9 @@ func (s *inlineUploadState) tryUploadBlock(block map[string]any) (map[string]any
 	if !ok {
 		return nil, false, nil
 	}
+	if s.modelType == "expert" {
+		return nil, true, &inlineFileUploadError{status: http.StatusBadRequest, message: "file upload is not supported for pro models"}
+	}
 	if s.uploadCount >= maxInlineFilesPerRequest {
 		err := fmt.Errorf("exceeded maximum of %d inline files per request", maxInlineFilesPerRequest)
 		return nil, true, &inlineFileUploadError{status: http.StatusBadRequest, message: err.Error(), err: err}

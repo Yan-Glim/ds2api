@@ -159,11 +159,14 @@ func (c *Client) GetPowForTarget(ctx context.Context, a *auth.RequestAuth, targe
 }
 
 func (c *Client) authHeaders(token string) map[string]string {
-	headers := make(map[string]string, len(dsprotocol.BaseHeaders)+1)
+	headers := make(map[string]string, len(dsprotocol.BaseHeaders)+5)
 	for k, v := range dsprotocol.BaseHeaders {
 		headers[k] = v
 	}
 	headers["authorization"] = "Bearer " + token
+	headers["x-app-version"] = "2.0.0"
+	headers["x-client-timezone-offset"] = "28800"
+	headers["origin"] = "https://chat.deepseek.com"
 	return headers
 }
 

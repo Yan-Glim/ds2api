@@ -76,6 +76,10 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		contentType = http.DetectContentType(data)
 	}
 	modelType := resolveUploadModelType(h.Store, r)
+	if modelType == "expert" {
+		shared.WriteOpenAIError(w, http.StatusBadRequest, "file upload is not supported for pro models")
+		return
+	}
 	result, err := h.DS.UploadFile(r.Context(), a, dsclient.UploadFileRequest{
 		Filename:    header.Filename,
 		ContentType: contentType,

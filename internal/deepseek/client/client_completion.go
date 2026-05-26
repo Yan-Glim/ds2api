@@ -6,6 +6,7 @@ import (
 	dsprotocol "ds2api/internal/deepseek/protocol"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"ds2api/internal/auth"
 	"ds2api/internal/config"
@@ -45,6 +46,15 @@ func (c *Client) streamPostWithFallback(ctx context.Context, doer trans.Doer, ur
 		return nil, err
 	}
 	headers = c.jsonHeaders(headers)
+	logHeaders := make(map[string]string, len(headers))
+	for k, v := range headers {
+		if strings.EqualFold(k, "authorization") {
+			logHeaders[k] = "<redacted>"
+		} else {
+			logHeaders[k] = v
+		}
+	}
+	config.Logger.Info("[deepseek] stream POST request", "url", url, "headers", logHeaders, "payload", string(b))
 	clients := c.requestClientsFromContext(ctx)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(b))
 	if err != nil {
